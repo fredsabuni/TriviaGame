@@ -1,0 +1,17 @@
+Database::
+->
+Player (id, phoneNumber, createdDate, updatedDate)
+Game (id, name,  createdDate, updatedDate)
+Question (id, questionTitle, correctOption,  createdDate, updatedDate) - Implemented
+Options (id, optionLetter, optionTitle,  createdDate, updatedDate) - Implemented / Needs Improvements
+Answer (id, Player, Question, answerTitle, answerDateTime, createdDate, updatedDate)
+Subscription (id, User, subscriptionDateTime, expiryDateTime, active,  createdDate, updatedDate)**
+Message (id, phoneNumber, message, status, createdDate, updatedDate)
+
+Process Flow::
+    -> Pay via FastHub -> Enter / Update (Player) -> Insert (Subscription) -> SMS Sent "Subscription" -> SMS sent "1st Question" "Timer".
+
+Logic::
+    -> If Question Answered correctly send another question
+    -> If Question Answered inCorrectly -> "Game Over"
+    -> If Question not answered after 75seconds -> send SMS "Game Over"
