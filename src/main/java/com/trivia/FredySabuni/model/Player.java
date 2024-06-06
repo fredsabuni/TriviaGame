@@ -11,5 +11,27 @@ public class Player {
     @OneToOne(mappedBy = "player", cascade = CascadeType.ALL)
     private PlayerSubscription subscription;
 
+    public Long getId() {
+        return id;
+    }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public PlayerSubscription getSubscription() {
+        return subscription;
+    }
+
+    public void setSubscription(PlayerSubscription subscription) {
+        this.subscription = subscription;
+    }
 }

@@ -1,16 +1,16 @@
 package com.trivia.FredySabuni.service;
 
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class SMSService {
@@ -18,7 +18,6 @@ public class SMSService {
 
     @Value("${sms.gateway.url}")
     private String smsGatewayUrl;
-
     @Value("${sms.gateway.api_key}")
     private String smsGatewayApiKey;
 
@@ -26,17 +25,30 @@ public class SMSService {
         this.restTemplate = restTemplateBuilder.build();
     }
 
-    public void sendSMS(String phoneNumber, String message) {
+    public ResponseEntity<?> sendSMS(String phoneNumber, String message) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + smsGatewayApiKey);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("apiKey", smsGatewayApiKey);
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.set("Accept", "application/json");
 
-        Map<String, String> request = new HashMap<>();
-        request.put("to", phoneNumber);
-        request.put("message", message);
+        MultiValueMap<String, String> request = new LinkedMultiValueMap<>();
+        request.add("to", phoneNumber);
+        request.add("message", message);
+        request.add("from", "${sms.from}");
+        request.add("username", "${sms.username}");
 
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(request, headers);
-        restTemplate.postForEntity(smsGatewayUrl, entity, String.class);
+        System.out.println("Response: {} " + smsGatewayUrl);
+
+        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(request, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(smsGatewayUrl, entity, String.class);
+            System.out.println("Response: {} " + response.getBody());
+        } catch (Exception e) {
+            System.out.println("Error sending SMS" + e);
+        }
+
+        return null;
     }
 
 }

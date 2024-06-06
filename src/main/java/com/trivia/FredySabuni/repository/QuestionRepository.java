@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.awt.print.Pageable;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +14,6 @@ import java.util.Optional;
 public interface QuestionRepository extends JpaRepository<Question, Long> {
     Optional<Question> findQuestionById(Long id);
 
-    @Query("SELECT q FROM question q ORDER BY RANDOM()")
+    @Query("SELECT q FROM Question q ORDER BY function('RAND')")
     List<Question> findRandomQuestions(Pageable pageable);
-
 }

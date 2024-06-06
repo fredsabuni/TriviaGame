@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.misc.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -18,12 +19,20 @@ public class Question extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(name = "question_text")
     private String questionText;
-
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionOption> options;
+    @ManyToMany(mappedBy = "questions")
+    private List<GameSession> gameSessions = new ArrayList<>();
+
+    public List<GameSession> getGameSessions() {
+        return gameSessions;
+    }
+
+    public void setGameSessions(List<GameSession> gameSessions) {
+        this.gameSessions = gameSessions;
+    }
 
     // Getters and Setters
 
