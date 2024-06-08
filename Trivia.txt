@@ -16,3 +16,5 @@ Logic::
     -> If Question Answered inCorrectly -> "Game Over"
     -> If Question not answered after 75seconds -> send SMS "Game Over"
     -> If the User has won the game / LOST session has ended they'll have to subscribe again in order to play again - TODO
+    -> EndPoint For Add User & Subscription into a game its should check if User exists and update records then trigger startGame
+    ->

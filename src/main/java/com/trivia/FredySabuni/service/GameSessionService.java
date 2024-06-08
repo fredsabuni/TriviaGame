@@ -52,7 +52,6 @@ public class GameSessionService {
             throw new RuntimeException("Player does not have an active subscription");
         }
 
-//        GameSession activeSession = gameSessionRepository.findByPlayerAndActive(player, true).orElse(null);
         Optional<GameSession> activeSessionOpt = gameSessionRepository.findByPlayerAndActive(player, true);
         if (activeSessionOpt.isPresent()) {
             GameSession activeSession = activeSessionOpt.get();
@@ -84,8 +83,17 @@ public class GameSessionService {
                 .orElseThrow(() -> new RuntimeException("No active game found for player"));
 
         Question currentQuestion = activeSession.getQuestions().get(activeSession.getCurrentQuestionIndex());
-        boolean correctAnswer = currentQuestion.getOptions().stream()
-                .anyMatch(option -> option.getOptionText().equalsIgnoreCase(playerResponse) && option.getCorrectAnsOption() == QuestionOption.correctOption.CORRECT);
+//        boolean correctAnswer = currentQuestion.getOptions().stream()
+//                .anyMatch(option -> option.getOptionText().equalsIgnoreCase(playerResponse) && option.getCorrectAnsOption() == QuestionOption.correctOption.CORRECT);
+        List<QuestionOption> options = currentQuestion.getOptions();
+        int optionIndex = playerResponse.toUpperCase().charAt(0) - 'A';
+        if (optionIndex < 0 || optionIndex >= options.size()) {
+            smsService.sendSMS(phoneNumber, "Invalid response. Please enter A, B, C, etc.");
+            return;
+        }
+
+        QuestionOption selectedOption = options.get(optionIndex);
+        boolean correctAnswer = selectedOption.getCorrectAnsOption() == QuestionOption.correctOption.CORRECT;
 
         if (correctAnswer) {
             activeSession.setScore(activeSession.getScore() + 1);
@@ -93,8 +101,7 @@ public class GameSessionService {
                 activeSession.setActive(false);
                 gameSessionRepository.save(activeSession);
                 log.info("Congratulations! You won the game with a score of: " + activeSession.getScore());
-//                TODO::Remove Below Comment
-//                smsService.sendSMS(phoneNumber, "Congratulations! You won the game with a score of: " + activeSession.getScore());
+                smsService.sendSMS(phoneNumber, "Congratulations! You won the game with a score of: " + activeSession.getScore());
                 return;
             }
         }
@@ -109,8 +116,7 @@ public class GameSessionService {
             activeSession.setActive(false);
             gameSessionRepository.save(activeSession);
             log.info("Game over! Your score: " + activeSession.getScore());
-//            TODO::Remove Below Comment
-//            smsService.sendSMS(phoneNumber, "Game over! Your score: " + activeSession.getScore());
+            smsService.sendSMS(phoneNumber, "Game over! Your score: " + activeSession.getScore());
         }
 
     }
@@ -135,8 +141,7 @@ public class GameSessionService {
                 session.setActive(false);
                 gameSessionRepository.save(session);
                 log.info("Time's up! Game over. Your score: " + session.getScore());
-                //TODO::Remove Below Comment
-//                smsService.sendSMS(session.getPlayer().getPhoneNumber(), "Time's up! Game over. Your score: " + session.getScore());
+                smsService.sendSMS(session.getPlayer().getPhoneNumber(), "Time's up! Game over. Your score: " + session.getScore());
             }
         }
 
@@ -147,12 +152,15 @@ public class GameSessionService {
         Question question = gameSession.getQuestions().get(gameSession.getCurrentQuestionIndex());
         List<QuestionOption> options = question.getOptions();
         StringBuilder questionText = new StringBuilder(String.format("Q%d: %s", gameSession.getCurrentQuestionIndex() + 1, question.getQuestionText()));
-        for (int i = 0; i < options.size(); i++) {
-            questionText.append(String.format("\n%s. %s", (char) ('A' + i), options.get(i).getOptionText()));
+        char optionLabel = 'A';
+//        for (int i = 0; i < options.size(); i++) {
+//            questionText.append(String.format("\n%s. %s", (char) ('A' + i), options.get(i).getOptionText()));
+//        }
+        for (QuestionOption option : options) {
+            questionText.append(String.format("\n%c. %s", optionLabel++, option.getOptionText()));
         }
         log.info(questionText.toString());
-        //TODO::Remove Below Comment
-//        smsService.sendSMS(gameSession.getPlayer().getPhoneNumber(), questionText.toString());
+        smsService.sendSMS(gameSession.getPlayer().getPhoneNumber(), questionText.toString());
     }
 
 
