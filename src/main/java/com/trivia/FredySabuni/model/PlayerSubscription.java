@@ -13,7 +13,8 @@ public class PlayerSubscription {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private String status;
-    @OneToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "player_id")
     Player player;
 

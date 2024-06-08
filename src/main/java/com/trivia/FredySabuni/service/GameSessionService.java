@@ -1,6 +1,7 @@
 package com.trivia.FredySabuni.service;
 
 import com.trivia.FredySabuni.config.GameProperties;
+import com.trivia.FredySabuni.dto.PlayerSubscriptionDTO;
 import com.trivia.FredySabuni.model.*;
 import com.trivia.FredySabuni.repository.GameSessionRepository;
 import com.trivia.FredySabuni.repository.PlayerRepository;
@@ -39,6 +40,32 @@ public class GameSessionService {
         this.gameProperties = gameProperties;
 
     }
+
+    @Transactional
+    public void addPlayerAndSubscription(PlayerSubscriptionDTO playerSubscriptionDTO) {
+        Player player = playerRepository.findByPhoneNumber(playerSubscriptionDTO.getPhoneNumber())
+                .orElse(new Player());
+
+        player.setPhoneNumber(playerSubscriptionDTO.getPhoneNumber());
+
+        //Save Player
+        playerRepository.save(player);
+
+        PlayerSubscription playerSubscription = playerSubscriptionRepository.findByPlayer(player)
+                .orElse(new PlayerSubscription());
+
+        playerSubscription.setPlayer(player);
+        playerSubscription.setAmount(playerSubscriptionDTO.getAmount());
+        playerSubscription.setStatus(playerSubscriptionDTO.getSubscriptionStatus());
+        playerSubscription.setStartDate(playerSubscriptionDTO.getSubscriptionStartDate());
+        playerSubscription.setEndDate(playerSubscriptionDTO.getSubscriptionEndDate());
+
+        //Save Subscription
+        playerSubscriptionRepository.save(playerSubscription);
+
+        startNewGame(player.getPhoneNumber());
+    }
+
 
     public void startNewGame(String phoneNumber) {
 
@@ -83,8 +110,6 @@ public class GameSessionService {
                 .orElseThrow(() -> new RuntimeException("No active game found for player"));
 
         Question currentQuestion = activeSession.getQuestions().get(activeSession.getCurrentQuestionIndex());
-//        boolean correctAnswer = currentQuestion.getOptions().stream()
-//                .anyMatch(option -> option.getOptionText().equalsIgnoreCase(playerResponse) && option.getCorrectAnsOption() == QuestionOption.correctOption.CORRECT);
         List<QuestionOption> options = currentQuestion.getOptions();
         int optionIndex = playerResponse.toUpperCase().charAt(0) - 'A';
         if (optionIndex < 0 || optionIndex >= options.size()) {
@@ -153,9 +178,6 @@ public class GameSessionService {
         List<QuestionOption> options = question.getOptions();
         StringBuilder questionText = new StringBuilder(String.format("Q%d: %s", gameSession.getCurrentQuestionIndex() + 1, question.getQuestionText()));
         char optionLabel = 'A';
-//        for (int i = 0; i < options.size(); i++) {
-//            questionText.append(String.format("\n%s. %s", (char) ('A' + i), options.get(i).getOptionText()));
-//        }
         for (QuestionOption option : options) {
             questionText.append(String.format("\n%c. %s", optionLabel++, option.getOptionText()));
         }
