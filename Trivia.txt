@@ -12,12 +12,22 @@ Process Flow::
     -> Pay via FastHub -> Enter / Update (Player) -> Insert (Subscription) -> SMS Sent "Subscription" -> SMS sent "1st Question" "Timer".
 
 Logic::
-    -> If Question Answered correctly send another question
-    -> If Question Answered inCorrectly -> "Game Over"
-    -> If Question not answered after 75seconds -> send SMS "Game Over"
-    -> Ability to answer question using A / B / C - DONE & Pushed
-    -> If the User has won the game / LOST session has ended they'll have to subscribe again in order to play again - TODO
-    -> EndPoint For Add User & Subscription into a game its should check if User exists and update records then trigger startGame
+    -> If Question Answered correctly send another question - DONE & Pushed
+    -> If Question Answered inCorrectly -> "Game Over" - DONE & Pushed
+    -> If Question not answered after 75seconds -> send SMS "Game Over" - DONE & Pushed
+    -> Ability to answer question using A / B / C or Option Text - DONE & Pushed
+    -> EndPoint For Add User & Subscription into a game its should check if User exists and update records then trigger startGame - DONE & Pushed
+
+    -> If the User has won the game / LOST session has ended they'll have to subscribe again in order to play again - DONE
+
+TODO::
+    -> Send SMS out -> 20 Tsh
+    -> Incoming SMS -> 100 Tsh -> Response be paid by customer "NBC Bank"
+    -> George will find us a dedicated shortcode
+    -> Yanga Partnership -> USSD -> Our Own USSD Engine
+    -> Game levels -> Introduce this
+
+
 
 
 Deployment::
@@ -37,7 +47,12 @@ sudo unzip -d /opt/gradle /tmp/gradle-7.4.2-bin.zip
 sudo ln -s /opt/gradle/gradle-7.4.2/bin/gradle /usr/bin/gradle
 
 Step 4: Clone Project
-git clone https://github.com/your-repository.git
+git clone git@github.com:fredsabuni/TriviaGame.git
 cd your-repository
 
+Step 5: Build the Project
+./gradlew clean build
+
+Step 6: Run the Application
+java -jar build/libs/FredySabuni-0.0.1-SNAPSHOT.jar
 

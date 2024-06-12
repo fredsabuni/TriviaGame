@@ -111,17 +111,32 @@ public class GameSessionService {
 
         Question currentQuestion = activeSession.getQuestions().get(activeSession.getCurrentQuestionIndex());
         List<QuestionOption> options = currentQuestion.getOptions();
-        int optionIndex = playerResponse.toUpperCase().charAt(0) - 'A';
-        if (optionIndex < 0 || optionIndex >= options.size()) {
-            smsService.sendSMS(phoneNumber, "Invalid response. Please enter A, B, C, etc.");
+        QuestionOption selectedOption = null;
+
+        // Check if the response is an option letter (A, B, C, etc.)
+        if(playerResponse.length() == 1 && playerResponse.toUpperCase().charAt(0) >= 'A' && playerResponse.toUpperCase().charAt(0) < 'A' + options.size() ){
+            int optionIndex = playerResponse.toUpperCase().charAt(0) - 'A';
+            selectedOption = options.get(optionIndex);
+        } else {
+            // Check if the response matches any option text
+            for(QuestionOption option : options){
+                if (option.getOptionText().equalsIgnoreCase(playerResponse)) {
+                    selectedOption = option;
+                    break;
+                }
+            }
+        }
+
+        if (selectedOption == null) {
+            smsService.sendSMS(phoneNumber, "Invalid response. Please enter A, B, C, or the option.");
             return;
         }
 
-        QuestionOption selectedOption = options.get(optionIndex);
         boolean correctAnswer = selectedOption.getCorrectAnsOption() == QuestionOption.correctOption.CORRECT;
 
         if (correctAnswer) {
-            activeSession.setScore(activeSession.getScore() + 1);
+            activeSession.setScore(activeSession.getScore() + 3);
+            gameSessionRepository.save(activeSession);
             if (activeSession.getScore() >= gameProperties.getScoreToWin()) {
                 activeSession.setActive(false);
                 gameSessionRepository.save(activeSession);
