@@ -16,7 +16,9 @@ import org.springframework.data.domain.PageRequest;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -102,45 +104,104 @@ public class GameSessionService {
 
     }
 
-    public void handlePlayerResponse(String phoneNumber, String playerResponse) {
-        Player player = playerRepository.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new RuntimeException("Player not found"));
+//    public void handlePlayerResponse(String phoneNumber, String playerResponse) {
+//        Player player = playerRepository.findByPhoneNumber(phoneNumber)
+//                .orElseThrow(() -> new RuntimeException("Player not found"));
+//
+//        GameSession activeSession = gameSessionRepository.findByPlayerAndActive(player, true)
+//                .orElseThrow(() -> new RuntimeException("No active game found for player"));
+//
+//        Question currentQuestion = activeSession.getQuestions().get(activeSession.getCurrentQuestionIndex());
+//        List<QuestionOption> options = currentQuestion.getOptions();
+//        QuestionOption selectedOption = null;
+//
+//        // Check if the response is an option letter (A, B, C, etc.)
+//        if(playerResponse.length() == 1 && playerResponse.toUpperCase().charAt(0) >= 'A' && playerResponse.toUpperCase().charAt(0) < 'A' + options.size() ){
+//            int optionIndex = playerResponse.toUpperCase().charAt(0) - 'A';
+//            selectedOption = options.get(optionIndex);
+//        } else {
+//            // Check if the response matches any option text
+//            for(QuestionOption option : options){
+//                if (option.getOptionText().equalsIgnoreCase(playerResponse)) {
+//                    selectedOption = option;
+//                    break;
+//                }
+//            }
+//        }
+//
+//        if (selectedOption == null) {
+//            smsService.sendSMS(phoneNumber, "Invalid response. Please enter A, B, C, or the option.");
+//            return;
+//        }
+//
+//        boolean correctAnswer = selectedOption.getCorrectAnsOption() == QuestionOption.correctOption.CORRECT;
+//
+//        if (correctAnswer) {
+//            activeSession.setScore(activeSession.getScore() + 3);
+//            gameSessionRepository.save(activeSession);
+//            if (activeSession.getScore() >= gameProperties.getScoreToWin()) {
+//                activeSession.setActive(false);
+//                gameSessionRepository.save(activeSession);
+//                log.info("Congratulations! You won the game with a score of: " + activeSession.getScore());
+//                smsService.sendSMS(phoneNumber, "Congratulations! You won the game with a score of: " + activeSession.getScore());
+//                return;
+//            }
+//        }
+//
+//        if (activeSession.getCurrentQuestionIndex() + 1 < activeSession.getQuestions().size()) {
+//            activeSession.setCurrentQuestionIndex(activeSession.getCurrentQuestionIndex() + 1);
+//            activeSession.setLastQuestionTime(LocalDateTime.now());
+//            gameSessionRepository.save(activeSession);
+//            sendQuestionToPlayer(activeSession);
+//        }
+//        else {
+//            activeSession.setActive(false);
+//            gameSessionRepository.save(activeSession);
+//            log.info("Game over! Your score: " + activeSession.getScore());
+//            smsService.sendSMS(phoneNumber, "Game over! Your score: " + activeSession.getScore());
+//        }
+//
+//    }
 
-        GameSession activeSession = gameSessionRepository.findByPlayerAndActive(player, true)
+    public void handlePlayerResponse(String phoneNumber, String userResponse) {
+        // Fetch user and active session in a single transaction to minimize database calls
+        GameSession activeSession = gameSessionRepository.findByPlayer_PhoneNumberAndActive(phoneNumber, true)
                 .orElseThrow(() -> new RuntimeException("No active game found for player"));
 
         Question currentQuestion = activeSession.getQuestions().get(activeSession.getCurrentQuestionIndex());
         List<QuestionOption> options = currentQuestion.getOptions();
+        Map<Character, QuestionOption> optionMap = new HashMap<>();
+        Map<String, QuestionOption> optionTextMap = new HashMap<>();
+
+        // Populate the maps for quick lookup
+        char optionLabel = 'A';
+        for (QuestionOption option : options) {
+            optionMap.put(optionLabel++, option);
+            optionTextMap.put(option.getOptionText().toLowerCase(), option);
+        }
+
         QuestionOption selectedOption = null;
 
         // Check if the response is an option letter (A, B, C, etc.)
-        if(playerResponse.length() == 1 && playerResponse.toUpperCase().charAt(0) >= 'A' && playerResponse.toUpperCase().charAt(0) < 'A' + options.size() ){
-            int optionIndex = playerResponse.toUpperCase().charAt(0) - 'A';
-            selectedOption = options.get(optionIndex);
+        if (userResponse.length() == 1) {
+            selectedOption = optionMap.get(Character.toUpperCase(userResponse.charAt(0)));
         } else {
             // Check if the response matches any option text
-            for(QuestionOption option : options){
-                if (option.getOptionText().equalsIgnoreCase(playerResponse)) {
-                    selectedOption = option;
-                    break;
-                }
-            }
+            selectedOption = optionTextMap.get(userResponse.toLowerCase());
         }
 
         if (selectedOption == null) {
-            smsService.sendSMS(phoneNumber, "Invalid response. Please enter A, B, C, or the option.");
+            smsService.sendSMS(phoneNumber, "Invalid response. Please enter A, B, C, etc., or the option text.");
             return;
         }
 
         boolean correctAnswer = selectedOption.getCorrectAnsOption() == QuestionOption.correctOption.CORRECT;
 
         if (correctAnswer) {
-            activeSession.setScore(activeSession.getScore() + 3);
-            gameSessionRepository.save(activeSession);
+            activeSession.setScore(activeSession.getScore() + 3); // Add 3 points for each correct answer
             if (activeSession.getScore() >= gameProperties.getScoreToWin()) {
                 activeSession.setActive(false);
                 gameSessionRepository.save(activeSession);
-                log.info("Congratulations! You won the game with a score of: " + activeSession.getScore());
                 smsService.sendSMS(phoneNumber, "Congratulations! You won the game with a score of: " + activeSession.getScore());
                 return;
             }
@@ -151,14 +212,11 @@ public class GameSessionService {
             activeSession.setLastQuestionTime(LocalDateTime.now());
             gameSessionRepository.save(activeSession);
             sendQuestionToPlayer(activeSession);
-        }
-        else {
+        } else {
             activeSession.setActive(false);
             gameSessionRepository.save(activeSession);
-            log.info("Game over! Your score: " + activeSession.getScore());
             smsService.sendSMS(phoneNumber, "Game over! Your score: " + activeSession.getScore());
         }
-
     }
 
     @Transactional

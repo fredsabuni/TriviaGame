@@ -15,6 +15,8 @@ import java.util.Optional;
 @Repository
 public interface GameSessionRepository extends JpaRepository<GameSession, Long> {
 
+    Optional<GameSession> findByPlayer_PhoneNumberAndActive(@Param("phoneNumber") String phoneNumber, boolean active);
+
     @Modifying
     @Query("UPDATE GameSession gs SET gs.currentQuestionIndex = 0, gs.score = 0, gs.active = true, gs.startTime = :startTime WHERE gs.id = :id")
     void resetGameSession(@Param("id") Long id, @Param("startTime") LocalDateTime startTime);
